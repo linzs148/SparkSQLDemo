@@ -5,6 +5,7 @@ import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.io.{BufferedReader, InputStreamReader}
 import scala.collection.mutable
 import scala.io.Source
 import scala.sys.exit
@@ -13,11 +14,19 @@ object SparkSQLDemo {
 
     val structTypeMap: mutable.Map[String, StructType] = mutable.Map()
 
+    def readResource(fileName: String): String = {
+        val bufferedReader: BufferedReader = new BufferedReader(new InputStreamReader(this.getClass.getResourceAsStream(fileName)))
+        val content: mutable.StringBuilder = new mutable.StringBuilder
+        content.append(Stream.continually(bufferedReader.readLine()).takeWhile(_ != null).mkString("\n"))
+        bufferedReader.close()
+        content.toString
+    }
+
     def loadSchama(): Unit = {
+        val content: String = readResource("tpcds.sql")
         // 初始化各个表的结构
-        val lines: Iterator[String] = Source.fromFile(this.getClass.getResource("tpcds.sql").getPath, "UTF-8").getLines()
         val createTableSQL: mutable.StringBuilder = new mutable.StringBuilder
-        lines.foreach(line => {
+        content.lines.foreach(line => {
             // 将tpcds.sql文件按照`;`进行分割
             if (line.contains(";")) {
                 val idx: Int = line.indexOf(';')
